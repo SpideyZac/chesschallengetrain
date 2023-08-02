@@ -8,6 +8,7 @@ pub struct Point {
     pub col: usize,
 }
 
+#[derive(Clone)]
 pub struct GeneticAlgorithm {
     pub nn: SpikingCellularNN,
     pub mutation_rate: f64,

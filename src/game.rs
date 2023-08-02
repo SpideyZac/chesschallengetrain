@@ -7,6 +7,7 @@ pub struct Cell {
     pub threshold: f64,
 }
 
+#[derive(Clone)]
 pub struct SpikingCellularNN {
     pub width: usize,
     pub height: usize,

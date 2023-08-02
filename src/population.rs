@@ -2,6 +2,7 @@ use crate::genetic::{GeneticAlgorithm, Point};
 
 pub struct Population {
     pub population: Vec<GeneticAlgorithm>,
+    pub rewards: Vec<f64>,
 }
 
 impl Population {
@@ -27,6 +28,32 @@ impl Population {
             ));
         }
 
-        Population { population }
+        Population { 
+            population,
+            rewards: vec![],
+        }
+    }
+
+    pub fn learn(&mut self) {
+        let mut best_rew = 0.0;
+        let mut best = self.population[0].clone();
+
+        for (i, reward) in self.rewards.iter().enumerate() {
+            if *reward > best_rew {
+                best_rew = *reward;
+                best = self.population[i].clone();
+            }
+        }
+
+        let mut new_population = vec![];
+        for _ in 0..self.population.len() {
+            let mut new = best.clone();
+            new.mutate();
+
+            new_population.push(new);
+        }
+
+        self.population = new_population;
+        self.rewards = vec![];
     }
 }
