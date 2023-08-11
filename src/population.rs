@@ -56,4 +56,8 @@ impl Population {
         self.population = new_population;
         self.rewards = vec![];
     }
+
+    pub fn add_rew(&mut self, reward: f64) {
+        self.rewards.push(reward);
+    }
 }

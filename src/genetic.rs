@@ -68,6 +68,12 @@ impl GeneticAlgorithm {
             self.nn.update_cells();
         }
 
+        if outputs.len() != self.outputs.len() {
+            for _ in 0..self.outputs.len() {
+                outputs.push(0.0);
+            }
+        }
+
         outputs
     }
 }
