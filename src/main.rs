@@ -33,7 +33,7 @@ fn main() {
             row: 0,
             col: 4,
         },
-        0.5,
+        0.75,
     );
 
     let train = vec![
@@ -45,10 +45,16 @@ fn main() {
 
     let mut best = -1000.0;
     let mut b = pop.population[0].clone();
+    let mut iter = -1;
 
-    for iter in 0..1000 {
+    loop {
+        iter += 1;
         if iter % 100 == 0 {
             println!("Iteration: {} Best: {:.5}", iter, best);
+        }
+
+        if best >= 4.0 {
+            break;
         }
 
         let mut rewards = vec![];
@@ -76,6 +82,7 @@ fn main() {
         }
 
         pop.learn();
+        pop.population[99] = b.clone();
     }
 
     for data_point in train.iter() {

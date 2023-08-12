@@ -19,16 +19,20 @@ impl SpikingCellularNN {
     pub fn new(width: usize, height: usize) -> Self {
         let mut random = thread_rng();
 
-        let mut cells = vec![vec![]];
+        let mut cells = Vec::with_capacity(height);
+        let mut start_cells = Vec::with_capacity(height);
 
-        for i in 0..height {
-            cells.push(vec![]);
-            for _ in 0..width {
-                cells[i].push(Cell { activation: random.gen_range(0f64..1f64), spiked: false, threshold: random.gen_range(0f64..1f64) });
-            }
+        for _ in 0..height {
+            let row = (0..width)
+                .map(|_| Cell {
+                    activation: random.gen_range(0.0..1.0),
+                    spiked: false,
+                    threshold: random.gen_range(0.0..1.0),
+                })
+                .collect::<Vec<_>>();
+            cells.push(row.clone());
+            start_cells.push(row);
         }
-
-        let start_cells = cells.clone();
 
         SpikingCellularNN {
             width,

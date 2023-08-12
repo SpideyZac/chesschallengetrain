@@ -1,5 +1,6 @@
 use crate::genetic::{GeneticAlgorithm, Point};
 
+#[derive(Clone)]
 pub struct Population {
     pub population: Vec<GeneticAlgorithm>,
     pub rewards: Vec<f64>,
@@ -15,7 +16,7 @@ impl Population {
         activator_point: Point,
         mutation_rate: f64,
     ) -> Self {
-        let mut population = vec![];
+        let mut population = Vec::with_capacity(size as usize);
 
         for _ in 0..size {
             population.push(GeneticAlgorithm::new(
@@ -30,7 +31,7 @@ impl Population {
 
         Population { 
             population,
-            rewards: vec![],
+            rewards: Vec::with_capacity(size as usize),
         }
     }
 

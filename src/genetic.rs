@@ -15,6 +15,7 @@ pub struct GeneticAlgorithm {
     pub inputs: Vec<Point>,
     pub outputs: Vec<Point>,
     pub activator: Point,
+    pub random: rand::rngs::ThreadRng,
 }
 
 impl GeneticAlgorithm {
@@ -26,22 +27,24 @@ impl GeneticAlgorithm {
         outputs: Vec<Point>,
         activator: Point,
     ) -> Self {
+        let random = thread_rng();
+
         GeneticAlgorithm {
             nn: SpikingCellularNN::new(width, height),
             mutation_rate,
             inputs,
             outputs,
             activator,
+            random,
         }
     }
 
     pub fn mutate(&mut self) {
-        let mut rng = thread_rng();
         for y in 0..self.nn.height {
             for x in 0..self.nn.width {
-                if rng.gen_range(0f64..1f64) > self.mutation_rate {
-                    self.nn.start_cells[y][x].threshold += rng.gen_range(-1f64..1f64);
-                    self.nn.start_cells[y][x].activation += rng.gen_range(-1f64..1f64);
+                if self.random.gen_range(0.0..1.0) < self.mutation_rate {
+                    self.nn.start_cells[y][x].threshold += self.random.gen_range(-1.0..1.0);
+                    self.nn.start_cells[y][x].activation += self.random.gen_range(-1.0..1.0);
                 }
             }
         }
@@ -68,11 +71,7 @@ impl GeneticAlgorithm {
             self.nn.update_cells();
         }
 
-        if outputs.len() != self.outputs.len() {
-            for _ in 0..self.outputs.len() {
-                outputs.push(0.0);
-            }
-        }
+        outputs.resize(self.outputs.len(), 0.0);
 
         outputs
     }
