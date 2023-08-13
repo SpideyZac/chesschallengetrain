@@ -45,10 +45,8 @@ fn main() {
 
     let mut best = -1000.0;
     let mut b = pop.population[0].clone();
-    let mut iter = -1;
 
-    loop {
-        iter += 1;
+    for iter in 0..500 {
         if iter % 100 == 0 {
             println!("Iteration: {} Best: {:.5}", iter, best);
         }
@@ -63,7 +61,7 @@ fn main() {
             let mut reward = 0.0;
 
             for data_point in train.iter() {
-                let output = ga.forward(data_point[0].as_slice());
+                let (output, _) = ga.forward(data_point[0].as_slice());
                 if ga.nn.cells[ga.activator.row][ga.activator.col].spiked {
                     reward += 1.0;
                 }
@@ -83,10 +81,5 @@ fn main() {
 
         pop.learn();
         pop.population[99] = b.clone();
-    }
-
-    for data_point in train.iter() {
-        let output = b.forward(data_point[0].as_slice());
-        println!("Input: {:?} Output: {:.5}", data_point[0], output[0]);
     }
 }

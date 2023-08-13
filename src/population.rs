@@ -46,7 +46,7 @@ impl Population {
             }
         }
 
-        let mut new_population = vec![];
+        let mut new_population = Vec::with_capacity(self.population.len());
         for _ in 0..self.population.len() {
             let mut new = best.clone();
             new.mutate();
@@ -55,7 +55,7 @@ impl Population {
         }
 
         self.population = new_population;
-        self.rewards = vec![];
+        self.rewards = Vec::with_capacity(self.population.len());
     }
 
     pub fn add_rew(&mut self, reward: f64) {

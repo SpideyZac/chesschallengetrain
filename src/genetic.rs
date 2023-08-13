@@ -50,8 +50,8 @@ impl GeneticAlgorithm {
         }
     }
 
-    pub fn forward(&mut self, inputs: &[f64]) -> Vec<f64> {
-        let mut outputs = vec![];
+    pub fn forward(&mut self, inputs: &[f64]) -> (Vec<f64>, u8) {
+        let mut outputs = Vec::with_capacity(self.outputs.len());
         self.nn.reset();
 
         for (i, input) in inputs.iter().enumerate() {
@@ -60,6 +60,7 @@ impl GeneticAlgorithm {
         }
 
         // 100 max iter
+        let mut i = 0;
         for _ in 0..100 {
             if self.nn.cells[self.activator.row][self.activator.col].spiked {
                 for output_point in self.outputs.iter() {
@@ -69,10 +70,16 @@ impl GeneticAlgorithm {
             }
 
             self.nn.update_cells();
+
+            i += 1;
         }
 
-        outputs.resize(self.outputs.len(), 0.0);
+        if outputs.len() != self.outputs.len() {
+            for output_point in self.outputs.iter() {
+                outputs.push(self.nn.cells[output_point.row][output_point.col].activation);
+            }
+        }
 
-        outputs
+        (outputs, i)
     }
 }
