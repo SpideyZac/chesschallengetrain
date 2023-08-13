@@ -46,9 +46,55 @@ fn main() {
     let mut best = -1000.0;
     let mut b = pop.population[0].clone();
 
-    for iter in 0..500 {
+    let mut stale = 0;
+    let mut last_best = 0.0;
+
+    for iter in 0..10000 {
         if iter % 100 == 0 {
             println!("Iteration: {} Best: {:.5}", iter, best);
+
+            if best == last_best {
+                stale += 1;
+            } else {
+                stale = 0;
+                last_best = best;
+            }
+
+            if stale == 10 {
+                println!("Stale Level 1!");
+
+                for i in 0..pop.population.len() {
+                    pop.population[i] = b.clone();
+                }
+            } else if stale == 20 {
+                println!("Stale Level 2... Reseting!");
+                pop = Population::new(
+                    100,
+                    WIDTH,
+                    HEIGHT,
+                    vec![
+                        Point {
+                            row: 1,
+                            col: 0,
+                        },
+                        Point {
+                            row: 3,
+                            col: 0,
+                        },
+                    ],
+                    vec![
+                        Point {
+                            row: 2,
+                            col: 4,
+                        },
+                    ],
+                    Point {
+                        row: 0,
+                        col: 4,
+                    },
+                    0.75,
+                );
+            }
         }
 
         if best >= 4.0 {
@@ -80,6 +126,5 @@ fn main() {
         }
 
         pop.learn();
-        pop.population[99] = b.clone();
     }
 }
