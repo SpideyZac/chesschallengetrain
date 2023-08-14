@@ -127,4 +127,33 @@ fn main() {
 
         pop.learn();
     }
+
+    b.save("best").unwrap();
+    let mut ga = genetic::GeneticAlgorithm::load("best", WIDTH,
+    HEIGHT,
+    0.75,
+    vec![
+        Point {
+            row: 1,
+            col: 0,
+        },
+        Point {
+            row: 3,
+            col: 0,
+        },
+    ],
+    vec![
+        Point {
+            row: 2,
+            col: 4,
+        },
+    ],
+    Point {
+        row: 0,
+        col: 4,
+    });
+
+    for train_data in train.iter() {
+        println!("{:?} {:?}", train_data[0], ga.forward(train_data[0].as_slice()).0);
+    }
 }

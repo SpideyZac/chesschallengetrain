@@ -1,6 +1,8 @@
 use rand::{thread_rng, Rng};
+use std::fs::File;
+use std::io::{Read, Write};
 
-use crate::game::SpikingCellularNN;
+use crate::game::{SpikingCellularNN, Cell};
 
 #[derive(Clone, Copy)]
 pub struct Point {
@@ -81,5 +83,64 @@ impl GeneticAlgorithm {
         }
 
         (outputs, i)
+    }
+
+    pub fn save(&self, filename: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let mut file = File::create(filename)?;
+
+        for row in &self.nn.start_cells {
+            for cell in row {
+                let serialized_cell = format!(
+                    "{:.8} {:.8} {:.8}\n",
+                    cell.activation, cell.spiked as i32, cell.threshold
+                );
+                file.write_all(serialized_cell.as_bytes())?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn load(
+        filename: &str,
+        width: usize,
+        height: usize,
+        mutation_rate: f64,
+        inputs: Vec<Point>,
+        outputs: Vec<Point>,
+        activator: Point,
+    ) -> Self {
+        let mut ga = GeneticAlgorithm::new(width, height, mutation_rate, inputs, outputs, activator);
+        let mut file = File::open(filename).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+
+        let mut start_cells = vec![];
+        for line in contents.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            let activation = parts[0].parse::<f64>().unwrap();
+            let spiked = parts[1].parse::<i32>().unwrap() != 0;
+            let threshold = parts[2].parse::<f64>().unwrap();
+
+            let cell = Cell {
+                activation,
+                spiked,
+                threshold,
+            };
+
+            start_cells.push(cell);
+        }
+
+        let width = width; // Set the original width here
+        let height = height; // Set the original height here
+        let mut start_cells_2d = vec![];
+        for _ in 0..height {
+            let row = start_cells.drain(..width).collect::<Vec<_>>();
+            start_cells_2d.push(row);
+        }
+
+        ga.nn.start_cells = start_cells_2d;
+
+        ga
     }
 }
