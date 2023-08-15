@@ -40,11 +40,12 @@ pub fn generate_random_batch(samples: &[ChessSample], batch_size: usize) -> Vec<
     batch
 }
 
-fn fen_to_board_vector(fen: &str) -> Vec<i8> {
+fn fen_to_board_vector(fen: &str) -> (bool, Vec<i8>) {
     let mut board_vector = vec![0; 64];
 
     let mut rank = 7;
     let mut file = 0;
+    let mut is_white_to_move = true; // Default to white's turn
 
     for c in fen.chars() {
         match c {
@@ -55,6 +56,12 @@ fn fen_to_board_vector(fen: &str) -> Vec<i8> {
             '/' => {
                 rank -= 1;
                 file = 0;
+            }
+            'w' => {
+                is_white_to_move = true;
+            }
+            'b' => {
+                is_white_to_move = false;
             }
             _ => {
                 let piece_value = match c {
@@ -78,22 +85,24 @@ fn fen_to_board_vector(fen: &str) -> Vec<i8> {
         }
     }
 
-    board_vector
+    (is_white_to_move, board_vector)
 }
 
-pub fn process_batch_for_training(samples: &[&ChessSample], is_black_turn: bool) -> (Vec<Vec<i8>>, Vec<i32>) {
+pub fn process_batch_for_training(samples: &[&ChessSample]) -> (Vec<Vec<i8>>, Vec<i32>) {
     let mut inputs = Vec::new();
     let mut targets = Vec::new();
 
     for sample in samples {
-        let mut board_vector = fen_to_board_vector(&sample.fen);
+        let (turn, mut board_vector) = fen_to_board_vector(&sample.fen);
         let mut evaluation = sample.evaluation;
 
-        // Negate the board values for black's pieces
-        if is_black_turn {
+        if !turn {
             for val in &mut board_vector {
                 *val *= -1;
             }
+        }
+
+        if turn {
             evaluation *= -1;
         }
 
