@@ -7,6 +7,8 @@ use crate::genetic::Point;
 use crate::population::Population;
 use crate::database::{read_csv, generate_random_batch, process_batch_for_training};
 
+use std::collections::VecDeque;
+
 fn main() {
     let samples_file = read_csv("C:\\Users\\zacle\\Downloads\\archive\\chessData.csv").unwrap();
     let samples = samples_file.as_slice();
@@ -44,9 +46,15 @@ fn main() {
     );
 
     let mut best = -100000.0;
+    let mut b = pop.population[0].clone();
+    let mut testbatchesinput: VecDeque<Vec<Vec<i8>>> = VecDeque::with_capacity(10);
+    let mut testbatchesoutputs: VecDeque<Vec<i32>> = VecDeque::with_capacity(10);
+    let mut testbatchesreward = -100000.0;
 
     for iter in 0..1000 {
-        println!("Iter: {} Best: {:.5}", iter, best);
+        if iter % 10 == 0 {
+            println!("Iter: {} Best: {:.5}", iter, best);
+        }
         let (target_inputs, target_outputs) = process_batch_for_training(generate_random_batch(samples, 16).as_slice());
 
         
@@ -57,16 +65,45 @@ fn main() {
                 let (output, iters) = ga.forward(target_inputs[i].iter().map(|&x| x as f64).collect::<Vec<f64>>().as_slice());
             
                 reward -= (output[0] - target_outputs[i] as f64).abs();
-                reward -= iters as f64;
+                reward -= (iters as f64) / 10.0;
             }
 
             if reward > best {
-                best = reward;
+                let mut r = 0.0;
+
+                if testbatchesinput.len() != 0 {
+                    for i in 0..testbatchesinput.len() {
+                        for j in 0..testbatchesinput[i].len() {
+                            let (output, iters) = ga.forward(testbatchesinput[i][j].iter().map(|&x| x as f64).collect::<Vec<f64>>().as_slice());
+                    
+                            r -= (output[0] - testbatchesoutputs[i][j] as f64).abs();
+                            r -= (iters as f64) / 10.0;
+                        }
+                    }
+
+                    r /= testbatchesinput.len() as f64;
+                } else {
+                    r = reward;
+                }
+
+                if r > testbatchesreward {
+                    if testbatchesinput.binary_search(&target_inputs).is_err() {
+                        testbatchesinput.push_front(target_inputs.clone());
+                        testbatchesoutputs.push_front(target_outputs.clone());
+                    }
+
+                    best = reward;
+                    b = ga.clone();
+                    testbatchesreward = r;
+                }
             }
 
             pop.rewards.push(reward);
         }
 
         pop.learn();
+        pop.population[99] = b.clone();
     }
+
+    b.save("best").unwrap();
 }
