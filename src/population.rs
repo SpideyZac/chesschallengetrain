@@ -42,15 +42,12 @@ impl Population {
             }
         }
 
-        let mut new_population = Vec::with_capacity(self.population.len());
-        for _ in 0..self.population.len() {
+        for ga in self.population.iter_mut() {
             let mut new = best.clone();
             new.mutate();
-
-            new_population.push(new);
+            *ga = new;
         }
 
-        self.population = new_population;
         self.rewards = Vec::with_capacity(self.population.len());
     }
 
