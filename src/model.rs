@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{Read, Write};
 
+use crate::{HEIGHT, WIDTH};
 use crate::game::{SpikingCellularNN, Cell};
 use crate::genetic::Point;
 
@@ -14,14 +15,12 @@ pub struct Model {
 
 impl Model {
     pub fn new(
-        width: usize,
-        height: usize,
         inputs: Vec<Point>,
         outputs: Vec<Point>,
         activator: Point,
     ) -> Self {
         Model {
-            nn: SpikingCellularNN::new(width, height),
+            nn: SpikingCellularNN::default(),
             inputs,
             outputs,
             activator,
@@ -79,47 +78,32 @@ impl Model {
 
     pub fn load(
         filename: &str,
-        width: usize,
-        height: usize,
         inputs: Vec<Point>,
         outputs: Vec<Point>,
         activator: Point,
     ) -> Self {
-        let mut ga = Model::new(width, height, inputs, outputs, activator);
+        let mut ga = Model::new(inputs, outputs, activator);
         let mut file = File::open(filename).unwrap();
         let mut contents = String::new();
         file.read_to_string(&mut contents).unwrap();
 
-        let mut start_cells = vec![];
-        for line in contents.lines() {
+        for (i, line) in contents.lines().enumerate() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             let activation = parts[0].parse::<f64>().unwrap();
             let spiked = parts[1].parse::<i32>().unwrap() != 0;
             let threshold = parts[2].parse::<f64>().unwrap();
 
-            let cell = Cell {
+            ga.nn.start_cells[i / WIDTH][i % WIDTH] = Cell {
                 activation,
                 spiked,
                 threshold,
             };
-
-            start_cells.push(cell);
         }
-
-        let width = width; // Set the original width here
-        let height = height; // Set the original height here
-        let mut start_cells_2d = vec![];
-        for _ in 0..height {
-            let row = start_cells.drain(..width).collect::<Vec<_>>();
-            start_cells_2d.push(row);
-        }
-
-        ga.nn.start_cells = start_cells_2d;
 
         ga
     }
 
-    pub fn reward(&mut self, target_inputs: &Vec<Vec<f64>>, targets: &Vec<Vec<f64>>) -> f64 {
+    pub fn reward(&mut self, target_inputs: &Vec<Vec<f64>>, targets: &[Vec<f64>]) -> f64 {
         let mut reward = 0.0;
 
         for i in 0..target_inputs.len() {
@@ -138,27 +122,27 @@ impl Model {
         let mut prev = -1000.0;
 
         for iter in 0..iterations {
-            let mut gradients_activation: Vec<f64> = Vec::with_capacity(self.nn.width * self.nn.height);
-            let mut gradients_threshold: Vec<f64> = Vec::with_capacity(self.nn.width * self.nn.height);
+            let mut gradients_activation = [[0.0; WIDTH]; HEIGHT];
+            let mut gradients_threshold = [[0.0; WIDTH]; HEIGHT];
             let orig_reward = self.reward(&target_inputs, &target_outputs);
 
-            for i in 0..self.nn.start_cells.len() {
-                for j in 0..self.nn.start_cells[i].len() {
+            for i in 0..HEIGHT {
+                for j in 0..WIDTH {
                     self.nn.start_cells[i][j].activation += epsilon;
                     let reward = self.reward(&target_inputs, &target_outputs);
                     self.nn.start_cells[i][j].activation -= epsilon;
-                    gradients_activation.push((reward - orig_reward) / epsilon * learning_rate);
+                    gradients_activation[i][j] = (reward - orig_reward) / epsilon * learning_rate;
                     self.nn.start_cells[i][j].threshold += epsilon;
                     let reward = self.reward(&target_inputs, &target_outputs);
                     self.nn.start_cells[i][j].threshold -= epsilon;
-                    gradients_threshold.push((reward - orig_reward) / epsilon * learning_rate);
+                    gradients_threshold[i][j] = (reward - orig_reward) / epsilon * learning_rate;
                 }
             }
 
             for i in 0..self.nn.start_cells.len() {
                 for j in 0..self.nn.start_cells[i].len() {
-                    self.nn.start_cells[i][j].activation += gradients_activation[i * self.nn.start_cells[i].len() + j];
-                    self.nn.start_cells[i][j].threshold += gradients_threshold[i * self.nn.start_cells[i].len() + j];
+                    self.nn.start_cells[i][j].activation += gradients_activation[i][j];
+                    self.nn.start_cells[i][j].threshold += gradients_threshold[i][j];
                 }
             }
 

@@ -2,7 +2,7 @@ use rand::{thread_rng, Rng};
 use std::fs::File;
 use std::io::{Read, Write};
 
-use crate::game::{SpikingCellularNN, Cell};
+use crate::{game::{SpikingCellularNN, Cell}, HEIGHT, WIDTH};
 
 #[derive(Clone, Copy)]
 pub struct Point {
@@ -22,8 +22,6 @@ pub struct GeneticAlgorithm {
 
 impl GeneticAlgorithm {
     pub fn new(
-        width: usize,
-        height: usize,
         mutation_rate: f64,
         inputs: Vec<Point>,
         outputs: Vec<Point>,
@@ -32,7 +30,7 @@ impl GeneticAlgorithm {
         let random = thread_rng();
 
         GeneticAlgorithm {
-            nn: SpikingCellularNN::new(width, height),
+            nn: SpikingCellularNN::default(),
             mutation_rate,
             inputs,
             outputs,
@@ -42,8 +40,8 @@ impl GeneticAlgorithm {
     }
 
     pub fn mutate(&mut self) {
-        for y in 0..self.nn.height {
-            for x in 0..self.nn.width {
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
                 if self.random.gen_range(0.0..1.0) < self.mutation_rate {
                     self.nn.start_cells[y][x].threshold += self.random.gen_range(-1.0..1.0);
                     self.nn.start_cells[y][x].activation += self.random.gen_range(-1.0..1.0);
@@ -103,43 +101,28 @@ impl GeneticAlgorithm {
 
     pub fn load(
         filename: &str,
-        width: usize,
-        height: usize,
         mutation_rate: f64,
         inputs: Vec<Point>,
         outputs: Vec<Point>,
         activator: Point,
     ) -> Self {
-        let mut ga = GeneticAlgorithm::new(width, height, mutation_rate, inputs, outputs, activator);
+        let mut ga = GeneticAlgorithm::new(mutation_rate, inputs, outputs, activator);
         let mut file = File::open(filename).unwrap();
         let mut contents = String::new();
         file.read_to_string(&mut contents).unwrap();
 
-        let mut start_cells = vec![];
-        for line in contents.lines() {
+        for (i, line) in contents.lines().enumerate() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             let activation = parts[0].parse::<f64>().unwrap();
             let spiked = parts[1].parse::<i32>().unwrap() != 0;
             let threshold = parts[2].parse::<f64>().unwrap();
 
-            let cell = Cell {
+            ga.nn.start_cells[i / WIDTH][i % WIDTH] = Cell {
                 activation,
                 spiked,
                 threshold,
             };
-
-            start_cells.push(cell);
         }
-
-        let width = width; // Set the original width here
-        let height = height; // Set the original height here
-        let mut start_cells_2d = vec![];
-        for _ in 0..height {
-            let row = start_cells.drain(..width).collect::<Vec<_>>();
-            start_cells_2d.push(row);
-        }
-
-        ga.nn.start_cells = start_cells_2d;
 
         ga
     }
