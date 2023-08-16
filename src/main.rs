@@ -110,6 +110,14 @@ fn main() {
     // b.save("best").unwrap();
 
     let mut model = Model::new(width, height, input_points, output_points, activator_point);
-    let batch = process_batch_for_training(generate_random_batch(samples, 1).as_slice());
-    model.gradient_ascent(10, 0.01, batch.0.iter().map(|x| x.iter().map(|&y| y as f64).collect()).collect::<Vec<Vec<f64>>>(), vec![batch.1.iter().map(|&z| z as f64).collect()]);
+    for iter in 0..100 {
+        let batch = process_batch_for_training(generate_random_batch(samples, 16).as_slice());
+        let mut target_outputs = vec![];
+        for output in batch.1.iter() {
+            target_outputs.push(vec![*output as f64]);
+        }
+        println!("Batch: {}", iter);
+        model.gradient_ascent(5, 0.001, batch.0.iter().map(|x| x.iter().map(|&y| y as f64).collect()).collect::<Vec<Vec<f64>>>(), target_outputs);
+    }
+    model.save("model").unwrap();
 }

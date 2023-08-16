@@ -134,11 +134,10 @@ impl Model {
     }
 
     pub fn gradient_ascent(&mut self, iterations: u16, learning_rate: f64, target_inputs: Vec<Vec<f64>>, target_outputs: Vec<Vec<f64>>) {
-        let epsilon = 1e-6;
+        let epsilon = 1e-8;
+        let mut prev = -1000.0;
 
         for iter in 0..iterations {
-            println!("Iteration: {} Reward: {:.5}", iter, self.reward(&target_inputs, &target_outputs));
-
             let mut gradients_activation: Vec<f64> = Vec::with_capacity(self.nn.width * self.nn.height);
             let mut gradients_threshold: Vec<f64> = Vec::with_capacity(self.nn.width * self.nn.height);
             let orig_reward = self.reward(&target_inputs, &target_outputs);
@@ -149,7 +148,6 @@ impl Model {
                     let reward = self.reward(&target_inputs, &target_outputs);
                     self.nn.start_cells[i][j].activation -= epsilon;
                     gradients_activation.push((reward - orig_reward) / epsilon * learning_rate);
-
                     self.nn.start_cells[i][j].threshold += epsilon;
                     let reward = self.reward(&target_inputs, &target_outputs);
                     self.nn.start_cells[i][j].threshold -= epsilon;
@@ -163,6 +161,9 @@ impl Model {
                     self.nn.start_cells[i][j].threshold += gradients_threshold[i * self.nn.start_cells[i].len() + j];
                 }
             }
+
+            println!("Iteration: {} Reward: {:.5} Better: {}", iter, self.reward(&target_inputs, &target_outputs), self.reward(&target_inputs, &target_outputs) > prev);
+            prev = self.reward(&target_inputs, &target_outputs);
         }
     }
 }
