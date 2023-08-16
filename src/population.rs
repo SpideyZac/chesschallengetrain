@@ -9,8 +9,6 @@ pub struct Population {
 impl Population {
     pub fn new(
         size: u32,
-        width: usize,
-        height: usize,
         input_points: Vec<Point>,
         output_points: Vec<Point>,
         activator_point: Point,
@@ -20,8 +18,6 @@ impl Population {
 
         for _ in 0..size {
             population.push(GeneticAlgorithm::new(
-                width,
-                height,
                 mutation_rate,
                 input_points.clone(),
                 output_points.clone(),
@@ -29,7 +25,7 @@ impl Population {
             ));
         }
 
-        Population { 
+        Population {
             population,
             rewards: Vec::with_capacity(size as usize),
         }

@@ -1,6 +1,7 @@
 use rand::{Rng, thread_rng};
+use crate::{WIDTH, HEIGHT};
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Default)]
 pub struct Cell {
     pub activation: f64,
     pub spiked: bool,
@@ -9,44 +10,42 @@ pub struct Cell {
 
 #[derive(Clone)]
 pub struct SpikingCellularNN {
-    pub width: usize,
-    pub height: usize,
-    pub cells: Vec<Vec<Cell>>,
-    pub start_cells: Vec<Vec<Cell>>,
+    pub cells: [[Cell; WIDTH]; HEIGHT],
+    pub start_cells: [[Cell; WIDTH]; HEIGHT],
 }
 
-impl SpikingCellularNN {
-    pub fn new(width: usize, height: usize) -> Self {
+impl Default for SpikingCellularNN {
+    fn default() -> Self {
         let mut random = thread_rng();
 
-        let mut cells = Vec::with_capacity(height);
-        let mut start_cells = Vec::with_capacity(height);
+        let mut res = Self {
+            cells: [[Cell::default(); WIDTH]; HEIGHT],
+            start_cells: [[Cell::default(); WIDTH]; HEIGHT],
+        };
 
-        for _ in 0..height {
-            let row = (0..width)
-                .map(|_| Cell {
+        for i in 0..HEIGHT {
+            for j in 0..WIDTH {
+                let cell = Cell {
                     activation: random.gen_range(0.0..1.0),
                     spiked: false,
                     threshold: random.gen_range(0.0..1.0),
-                })
-                .collect::<Vec<_>>();
-            cells.push(row.clone());
-            start_cells.push(row);
+                };
+
+                res.cells[i][j] = cell;
+                res.start_cells[i][j] = cell;
+            }
         }
 
-        SpikingCellularNN {
-            width,
-            height,
-            cells,
-            start_cells,
-        }
+        res
     }
+}
 
+impl SpikingCellularNN {
     pub fn update_cells(&mut self) {
-        let mut new_cells = self.cells.clone();
+        let mut new_cells = self.cells;
 
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for (y, new_row) in new_cells.iter_mut().enumerate() {
+            for (x, new_cell) in new_row.iter_mut().enumerate() {
                 let mut new_activation = self.cells[y][x].activation;
 
                 let mut num_neighbors = 0;
@@ -55,7 +54,7 @@ impl SpikingCellularNN {
                         let nx = x as isize + dx;
                         let ny = y as isize + dy;
 
-                        if nx >= 0 && nx < self.width as isize && ny >= 0 && ny < self.height as isize {
+                        if nx >= 0 && nx < WIDTH as isize && ny >= 0 && ny < HEIGHT as isize {
                             new_activation += self.cells[ny as usize][nx as usize].activation;
                             num_neighbors += 1;
                         }
@@ -67,13 +66,13 @@ impl SpikingCellularNN {
                 }
 
                 if new_activation > self.cells[y][x].threshold {
-                    new_cells[y][x].spiked = true;
+                    new_cell.spiked = true;
                     new_activation = 0.0;
                 } else {
-                    new_cells[y][x].spiked = false;
+                    new_cell.spiked = false;
                 }
 
-                new_cells[y][x].activation = new_activation;
+                new_cell.activation = new_activation;
             }
         }
 
@@ -81,8 +80,8 @@ impl SpikingCellularNN {
     }
 
     pub fn printgame(&self) {
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
                 let cell = &self.cells[y][x];
                 if cell.spiked {
                     print!("X{:.1} ", cell.activation);
@@ -96,6 +95,6 @@ impl SpikingCellularNN {
     }
 
     pub fn reset(&mut self) {
-        self.cells = self.start_cells.clone();
+        self.cells = self.start_cells;
     }
 }

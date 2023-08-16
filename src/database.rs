@@ -16,10 +16,10 @@ pub fn read_csv(file_path: &str) -> Result<Vec<ChessSample>, csv::Error> {
     for result in rdr.records() {
         let record = result?;
         let fen = record.get(0).unwrap().to_string();
-        let evaluation = if record.get(1).unwrap().chars().nth(0).unwrap() == '#' {
+        let evaluation = if record.get(1).unwrap().starts_with('#') {
             10000
         } else {
-            record.get(1).unwrap().parse::<i32>().unwrap()
+            record.get(1).unwrap().parse::<i32>().unwrap_or(23)
         };
 
         samples.push(ChessSample { fen, evaluation });

@@ -11,13 +11,14 @@ use crate::model::Model;
 
 // use std::collections::VecDeque;
 
+pub const WIDTH: usize = 20;
+pub const HEIGHT: usize = 16;
+
 fn main() {
-    let samples_file = read_csv("C:\\Users\\zacle\\Downloads\\archive\\chessData.csv").unwrap();
+    let samples_file = read_csv("chessData.csv").unwrap();
     let samples = samples_file.as_slice();
 
     // let size = 100;
-    let width = 20;
-    let height = 16;
     let mut input_points = vec![];
     for i in 0..8 {
         for j in 0..8 {
@@ -109,7 +110,7 @@ fn main() {
 
     // b.save("best").unwrap();
 
-    let mut model = Model::new(width, height, input_points, output_points, activator_point);
+    let mut model = Model::new(input_points, output_points, activator_point);
     for iter in 0..100 {
         let batch = process_batch_for_training(generate_random_batch(samples, 16).as_slice());
         let mut target_outputs = vec![];
