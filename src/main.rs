@@ -111,7 +111,8 @@ fn main() {
     // b.save("best").unwrap();
 
     let mut model = Model::new(input_points, output_points, activator_point);
-    for iter in 0..100 {
+    let timer = std::time::Instant::now();
+    for iter in 0..10 {
         let batch = process_batch_for_training(generate_random_batch(samples, 16).as_slice());
         let mut target_outputs = vec![];
         for output in batch.1.iter() {
@@ -121,4 +122,5 @@ fn main() {
         model.gradient_ascent(5, 0.001, batch.0.iter().map(|x| x.iter().map(|&y| y as f64).collect()).collect::<Vec<Vec<f64>>>(), target_outputs);
     }
     model.save("model").unwrap();
+    println!("Time Taken: {:.2} seconds", timer.elapsed().as_secs_f32())
 }
